@@ -61,13 +61,13 @@ function Get-SitePackages {
 
     foreach ($py in @("python", "python3", "py")) {
         if (Get-Command $py -ErrorAction SilentlyContinue) {
-            $pythonSnippet = @"
+            $pythonSnippet = @'
 import site
 pkgs = getattr(site, 'getsitepackages', lambda: [])()
 user = getattr(site, 'getusersitepackages', lambda: '')()
 for p in pkgs + ([user] if user else []):
     print(p)
-"@
+'@
             $result = & $py -c $pythonSnippet 2>$null
             if ($result) {
                 $result | Where-Object { $_ -and (Test-Path $_) } | ForEach-Object { $paths.Add($_) }
