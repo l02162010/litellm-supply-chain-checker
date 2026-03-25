@@ -127,7 +127,10 @@ while IFS= read -r p; do
   [ -d "$p" ] && SITE_PACKAGES+=("$p")
 done < <(get_site_packages)
 
-BROAD_HITS_FILE=$(mktemp -t litellm_broad_hits)
+if ! BROAD_HITS_FILE=$(mktemp "${TMPDIR:-/tmp}/litellm_broad_hits.XXXXXX"); then
+  echo "ERROR: failed to create temporary file for broad scan results" >&2
+  exit 1
+fi
 trap 'rm -f "$BROAD_HITS_FILE"' EXIT
 collect_broad_hits | sort -u > "$BROAD_HITS_FILE"
 

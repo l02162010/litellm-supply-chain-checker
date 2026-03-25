@@ -63,6 +63,25 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 .\check_litellm.ps1
 ```
 
+**把失敗的 GitHub Actions log 收集到同一個資料夾：**
+```bash
+python3 collect_action_logs.py --limit 5 --output-dir action-logs
+```
+
+**只抓某一次 run：**
+```bash
+python3 collect_action_logs.py --run-id 23534721081 --output-dir action-logs
+```
+
+這個輔助腳本會透過 `gh` CLI 找出失敗的 Actions run，並輸出：
+- `action-logs/index.md`
+- 每個 run 一個子資料夾
+- `summary.md`
+- `failed.log`
+- 每個失敗 job 各自的 log 檔
+
+如果你不在 repo 目錄內執行，請補上 `--repo OWNER/REPO`。
+
 ---
 
 ## 若發現感染
