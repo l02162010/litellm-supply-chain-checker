@@ -41,6 +41,12 @@ function Is-Malicious([string]$ver) {
     return $maliciousVersions -contains $ver
 }
 
+function Publish-CapturedMessage([string]$message) {
+    if ($env:LITELLM_CAPTURE_OUTPUT) {
+        Write-Output $message
+    }
+}
+
 function Flag-PipResult([string[]]$result, [string]$source) {
     $ver = (($result | Select-String "^Version:").Line -replace "Version:\s*", "").Trim()
     $loc = (($result | Select-String "^Location:").Line -replace "Location:\s*", "").Trim()
@@ -220,7 +226,9 @@ Get-ChildItem -Path $scanRoot5 -Recurse -Depth 8 -File -ErrorAction SilentlyCont
                     $window = $content[$i..$end] -join " "
                     if ($window -match '"(1\.82\.7|1\.82\.8)"') {
                         $ver = [regex]::Match($window, "1\.82\.[78]").Value
-                        Write-Host "  [!!!] INFECTED - lock file records malicious litellm $ver  ->  $filePath" -ForegroundColor Red
+                        $message = "  [!!!] INFECTED - lock file records malicious litellm $ver  ->  $filePath"
+                        Write-Host $message -ForegroundColor Red
+                        Publish-CapturedMessage $message
                         $script:found = $true
                         $step5Found = $true
                         break
@@ -232,11 +240,15 @@ Get-ChildItem -Path $scanRoot5 -Recurse -Depth 8 -File -ErrorAction SilentlyCont
             foreach ($line in $lines) {
                 if ($line -imatch $patExact) {
                     $ver = [regex]::Match($line, "1\.82\.[78]").Value
-                    Write-Host "  [!!!] INFECTED - pins malicious litellm $ver  ->  $filePath" -ForegroundColor Red
+                    $message = "  [!!!] INFECTED - pins malicious litellm $ver  ->  $filePath"
+                    Write-Host $message -ForegroundColor Red
+                    Publish-CapturedMessage $message
                     Write-Host "        $line" -ForegroundColor Red
                     $script:found = $true
                 } elseif ($line -imatch $patRange) {
-                    Write-Host "  [WARN] RISKY - version range may include malicious versions  ->  $filePath" -ForegroundColor DarkYellow
+                    $message = "  [WARN] RISKY - version range may include malicious versions  ->  $filePath"
+                    Write-Host $message -ForegroundColor DarkYellow
+                    Publish-CapturedMessage $message
                     Write-Host "         $line" -ForegroundColor DarkYellow
                     $script:info = $true
                 } else {
@@ -325,6 +337,7 @@ foreach ($path in $distInfoPaths) {
     $ver = [regex]::Match($name, "^litellm-(.+)\.(dist-info|egg-info)$").Groups[1].Value
     if (Is-Malicious $ver) {
         Write-Host "  [!!!] INFECTED - dist-info for malicious version $ver`: $path" -ForegroundColor Red
+        Publish-CapturedMessage "  [!!!] INFECTED - dist-info for malicious version $ver`: $path"
         $script:found = $true
     } else {
         Write-Host "  [i]  dist-info for litellm $ver`: $path (not a known malicious version)" -ForegroundColor DarkYellow
@@ -378,7 +391,9 @@ if (-not $step10Found) { Write-Host "  [OK] no unexpected .pth files" -Foregroun
 Write-Host ""
 Write-Host "=========================================" -ForegroundColor Cyan
 if ($script:found) {
-    Write-Host "  [!!!] MALICIOUS litellm version detected!" -ForegroundColor Red
+    $summaryMessage = "  [!!!] MALICIOUS litellm version detected!"
+    Write-Host $summaryMessage -ForegroundColor Red
+    Publish-CapturedMessage $summaryMessage
     Write-Host ""
     Write-Host "  Immediate actions:" -ForegroundColor Yellow
     Write-Host "  1. pip uninstall litellm -y  (in every affected env)"
@@ -391,10 +406,14 @@ if ($script:found) {
     Write-Host "     - Any secrets in .env files or shell history"
     Write-Host "  4. Review all connected services for unauthorized access"
 } elseif ($script:info) {
-    Write-Host "  [i]  litellm found - NOT a known malicious version." -ForegroundColor DarkYellow
+    $summaryMessage = "  [i]  litellm found - NOT a known malicious version."
+    Write-Host $summaryMessage -ForegroundColor DarkYellow
+    Publish-CapturedMessage $summaryMessage
     Write-Host "       Confirm version is not 1.82.7 or 1.82.8." -ForegroundColor DarkYellow
     Write-Host "       Note: PyPI has suspended the package; consider alternatives." -ForegroundColor DarkYellow
 } else {
-    Write-Host "  [OK] No litellm infection detected. You are safe." -ForegroundColor Green
+    $summaryMessage = "  [OK] No litellm infection detected. You are safe."
+    Write-Host $summaryMessage -ForegroundColor Green
+    Publish-CapturedMessage $summaryMessage
 }
 Write-Host "=========================================" -ForegroundColor Cyan
