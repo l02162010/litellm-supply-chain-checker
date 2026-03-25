@@ -11,10 +11,19 @@ $pass = 0
 $fail = 0
 
 function Invoke-Checker([string]$scriptPath, [string]$scanRoot, [string]$userProfile) {
-    $escapedScript = $scriptPath.Replace("'", "''")
-    $escapedScanRoot = $scanRoot.Replace("'", "''")
-    $escapedUserProfile = $userProfile.Replace("'", "''")
-    return & powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "& { `$env:LITELLM_CAPTURE_OUTPUT = '1'; `$env:LITELLM_SCAN_ROOT = '$escapedScanRoot'; `$env:USERPROFILE = '$escapedUserProfile'; & '$escapedScript' *>&1 | Out-String }"
+    $oldCaptureOutput = $env:LITELLM_CAPTURE_OUTPUT
+    $oldScanRoot = $env:LITELLM_SCAN_ROOT
+    $oldUserProfile = $env:USERPROFILE
+    try {
+        $env:LITELLM_CAPTURE_OUTPUT = '1'
+        $env:LITELLM_SCAN_ROOT = $scanRoot
+        $env:USERPROFILE = $userProfile
+        return & $scriptPath *>&1 | Out-String
+    } finally {
+        $env:LITELLM_CAPTURE_OUTPUT = $oldCaptureOutput
+        $env:LITELLM_SCAN_ROOT = $oldScanRoot
+        $env:USERPROFILE = $oldUserProfile
+    }
 }
 
 function Assert-Contains([string]$label, [string]$output, [string]$expected) {
