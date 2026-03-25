@@ -37,6 +37,14 @@ function Assert-NotContains([string]$label, [string]$output, [string]$unexpected
     }
 }
 
+function Show-DebugOutput([string]$label, [string]$output) {
+    Write-Host ""
+    Write-Host "[debug] $label output follows" -ForegroundColor Yellow
+    Write-Host "--------------------" -ForegroundColor Yellow
+    Write-Host $output
+    Write-Host "--------------------" -ForegroundColor Yellow
+}
+
 Write-Host "========================================"
 Write-Host "  Step 5 -- Dependency File Tests"
 Write-Host "========================================"
@@ -50,6 +58,7 @@ $env:LITELLM_SCAN_ROOT = Join-Path $fixtures "infected"
 $out = Invoke-Checker $script
 $env:LITELLM_SCAN_ROOT = $null
 $env:USERPROFILE = $oldUserProfile
+$failBefore = $fail
 
 Assert-Contains `
     "flags litellm==1.82.7 in requirements.txt" `
@@ -66,6 +75,7 @@ Assert-Contains `
 Assert-Contains `
     "final summary shows infection" `
     $out "MALICIOUS litellm version detected"
+if ($fail -gt $failBefore) { Show-DebugOutput "infected fixtures" $out }
 
 # ── Safe fixtures ──────────────────────────────────────────────────────────────
 Write-Host ""
@@ -76,6 +86,7 @@ $env:LITELLM_SCAN_ROOT = Join-Path $fixtures "safe"
 $out = Invoke-Checker $script
 $env:LITELLM_SCAN_ROOT = $null
 $env:USERPROFILE = $oldUserProfile
+$failBefore = $fail
 
 Assert-NotContains `
     "does NOT flag litellm==1.82.6 as INFECTED" `
@@ -92,6 +103,7 @@ Assert-Contains `
 Assert-NotContains `
     "commented malicious pin is NOT flagged" `
     $out "pins malicious litellm 1.82.8"
+if ($fail -gt $failBefore) { Show-DebugOutput "safe fixtures" $out }
 
 # ── Step 10 — .pth filter regression ────────────────────────────────────────────
 Write-Host ""
