@@ -18,7 +18,7 @@ function Invoke-Checker([string]$scriptPath, [string]$scanRoot, [string]$userPro
         $env:LITELLM_CAPTURE_OUTPUT = '1'
         $env:LITELLM_SCAN_ROOT = $scanRoot
         $env:USERPROFILE = $userProfile
-        return & $scriptPath *>&1 | Out-String
+        return & $scriptPath 2>$null | Out-String
     } finally {
         $env:LITELLM_CAPTURE_OUTPUT = $oldCaptureOutput
         $env:LITELLM_SCAN_ROOT = $oldScanRoot
