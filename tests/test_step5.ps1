@@ -12,7 +12,7 @@ $fail = 0
 
 function Invoke-Checker([string]$scriptPath) {
     $escapedScript = $scriptPath.Replace("'", "''")
-    return & powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "& { \$env:LITELLM_CAPTURE_OUTPUT = '1'; & '$escapedScript' *>&1 | Out-String }"
+    return & powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "& { `$env:LITELLM_CAPTURE_OUTPUT = '1'; & '$escapedScript' *>&1 | Out-String }"
 }
 
 function Assert-Contains([string]$label, [string]$output, [string]$expected) {
