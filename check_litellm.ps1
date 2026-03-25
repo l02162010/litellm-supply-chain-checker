@@ -45,7 +45,7 @@ function Flag-PipResult([string[]]$result, [string]$source) {
     $ver = (($result | Select-String "^Version:").Line -replace "Version:\s*", "").Trim()
     $loc = (($result | Select-String "^Location:").Line -replace "Location:\s*", "").Trim()
     if (Is-Malicious $ver) {
-        Write-Host "  [!!!] INFECTED — litellm $ver [$source]  ->  $loc" -ForegroundColor Red
+        Write-Host "  [!!!] INFECTED - litellm $ver [$source]  ->  $loc" -ForegroundColor Red
         $script:found = $true
     } else {
         Write-Host "  [i]  litellm $ver [$source] (not a known malicious version)  ->  $loc" -ForegroundColor DarkYellow
@@ -104,7 +104,7 @@ Write-Host "Python site-packages roots found: $($sitePackages.Count)"
 $sitePackages | ForEach-Object { Write-Host "  * $_" }
 Write-Host ""
 
-# ─── 1. pip global install ────────────────────────────────────────────────────
+# --- 1. pip global install ----------------------------------------------------
 Write-Host "[1] Checking pip global install..." -ForegroundColor Yellow
 $step1Found = $false
 foreach ($cmd in @("pip", "pip3")) {
@@ -118,7 +118,7 @@ foreach ($cmd in @("pip", "pip3")) {
 }
 if (-not $step1Found) { Write-Host "  [OK] not found" -ForegroundColor Green }
 
-# ─── 2. Known site-packages (version via dist-info, not just folder presence) ─
+# --- 2. Known site-packages (version via dist-info, not just folder presence) -
 Write-Host ""
 Write-Host "[2] Scanning known site-packages for litellm..." -ForegroundColor Yellow
 $step2Found = $false
@@ -130,21 +130,21 @@ foreach ($sp in $sitePackages) {
         if ($distInfo) {
             $ver = $distInfo.Name -replace "^litellm-(.+)\.dist-info$", '$1'
             if (Is-Malicious $ver) {
-                Write-Host "  [!!!] INFECTED — litellm $ver installed at $sp" -ForegroundColor Red
+                Write-Host "  [!!!] INFECTED - litellm $ver installed at $sp" -ForegroundColor Red
                 $script:found = $true
             } else {
                 Write-Host "  [i]  litellm $ver at $sp (not a known malicious version)" -ForegroundColor DarkYellow
                 $script:info = $true
             }
         } else {
-            Write-Host "  [i]  litellm directory at $sp\litellm — no dist-info (may be source checkout, verify manually)" -ForegroundColor DarkYellow
+            Write-Host "  [i]  litellm directory at $sp\litellm - no dist-info (may be source checkout, verify manually)" -ForegroundColor DarkYellow
         }
         $step2Found = $true
     }
 }
 if (-not $step2Found) { Write-Host "  [OK] not found in known site-packages" -ForegroundColor Green }
 
-# ─── 3. conda environments ────────────────────────────────────────────────────
+# --- 3. conda environments ----------------------------------------------------
 Write-Host ""
 Write-Host "[3] Checking conda environments..." -ForegroundColor Yellow
 if (Get-Command conda -ErrorAction SilentlyContinue) {
@@ -165,7 +165,7 @@ if (Get-Command conda -ErrorAction SilentlyContinue) {
     Write-Host "  (conda not installed, skipping)"
 }
 
-# ─── 4. pyenv-win ─────────────────────────────────────────────────────────────
+# --- 4. pyenv-win -------------------------------------------------------------
 Write-Host ""
 Write-Host "[4] Checking pyenv-win versions..." -ForegroundColor Yellow
 $pyenvRoot = "$env:USERPROFILE\.pyenv\pyenv-win\versions"
@@ -186,7 +186,7 @@ if (Test-Path $pyenvRoot) {
     Write-Host "  (pyenv-win not installed, skipping)"
 }
 
-# ─── 5. Dependency files and lock files — version-aware ──────────────────────
+# --- 5. Dependency files and lock files - version-aware ----------------------
 Write-Host ""
 Write-Host "[5] Searching project dependency files and lock files..." -ForegroundColor Yellow
 $step5Found = $false
@@ -219,7 +219,7 @@ Get-ChildItem -Path $scanRoot5 -Recurse -Depth 8 -File -ErrorAction SilentlyCont
                     $window = $content[$i..$end] -join " "
                     if ($window -match '"(1\.82\.7|1\.82\.8)"') {
                         $ver = [regex]::Match($window, "1\.82\.[78]").Value
-                        Write-Host "  [!!!] INFECTED — lock file records malicious litellm $ver  ->  $filePath" -ForegroundColor Red
+                        Write-Host "  [!!!] INFECTED - lock file records malicious litellm $ver  ->  $filePath" -ForegroundColor Red
                         $script:found = $true
                         $step5Found = $true
                         break
@@ -231,11 +231,11 @@ Get-ChildItem -Path $scanRoot5 -Recurse -Depth 8 -File -ErrorAction SilentlyCont
             foreach ($line in $lines) {
                 if ($line -imatch $patExact) {
                     $ver = [regex]::Match($line, "1\.82\.[78]").Value
-                    Write-Host "  [!!!] INFECTED — pins malicious litellm $ver  ->  $filePath" -ForegroundColor Red
+                    Write-Host "  [!!!] INFECTED - pins malicious litellm $ver  ->  $filePath" -ForegroundColor Red
                     Write-Host "        $line" -ForegroundColor Red
                     $script:found = $true
                 } elseif ($line -imatch $patRange) {
-                    Write-Host "  [WARN] RISKY — version range may include malicious versions  ->  $filePath" -ForegroundColor DarkYellow
+                    Write-Host "  [WARN] RISKY - version range may include malicious versions  ->  $filePath" -ForegroundColor DarkYellow
                     Write-Host "         $line" -ForegroundColor DarkYellow
                     $script:info = $true
                 } else {
@@ -249,7 +249,7 @@ Get-ChildItem -Path $scanRoot5 -Recurse -Depth 8 -File -ErrorAction SilentlyCont
     }
 if (-not $step5Found) { Write-Host "  [OK] no litellm references found" -ForegroundColor Green }
 
-# ─── 6. Virtual environments ─────────────────────────────────────────────────
+# --- 6. Virtual environments -------------------------------------------------
 Write-Host ""
 Write-Host "[6] Scanning project virtual environments..." -ForegroundColor Yellow
 $step6Found = $false
@@ -274,7 +274,7 @@ foreach ($venvDir in $venvDirs) {
 }
 if (-not $step6Found) { Write-Host "  [OK] not found in any virtual env" -ForegroundColor Green }
 
-# ─── 7. uv ───────────────────────────────────────────────────────────────────
+# --- 7. uv -------------------------------------------------------------------
 Write-Host ""
 Write-Host "[7] Checking uv..." -ForegroundColor Yellow
 if (Get-Command uv -ErrorAction SilentlyContinue) {
@@ -288,7 +288,7 @@ if (Get-Command uv -ErrorAction SilentlyContinue) {
     Write-Host "  (uv not installed, skipping)"
 }
 
-# ─── 8. dist-info / egg-info — version-aware ─────────────────────────────────
+# --- 8. dist-info / egg-info - version-aware ---------------------------------
 Write-Host ""
 Write-Host "[8] Searching for litellm dist-info / egg-info..." -ForegroundColor Yellow
 $step8Found = $false
@@ -323,7 +323,7 @@ foreach ($path in $distInfoPaths) {
     $name = Split-Path $path -Leaf
     $ver = [regex]::Match($name, "^litellm-(.+)\.(dist-info|egg-info)$").Groups[1].Value
     if (Is-Malicious $ver) {
-        Write-Host "  [!!!] INFECTED — dist-info for malicious version $ver`: $path" -ForegroundColor Red
+        Write-Host "  [!!!] INFECTED - dist-info for malicious version $ver`: $path" -ForegroundColor Red
         $script:found = $true
     } else {
         Write-Host "  [i]  dist-info for litellm $ver`: $path (not a known malicious version)" -ForegroundColor DarkYellow
@@ -333,7 +333,7 @@ foreach ($path in $distInfoPaths) {
 }
 if (-not $step8Found) { Write-Host "  [OK] not found" -ForegroundColor Green }
 
-# ─── 9. CRITICAL: litellm_init.pth (v1.82.8 backdoor) ───────────────────────
+# --- 9. CRITICAL: litellm_init.pth (v1.82.8 backdoor) -----------------------
 Write-Host ""
 Write-Host "[9] CRITICAL: Searching for litellm_init.pth (v1.82.8 backdoor)..." -ForegroundColor Yellow
 $step9Found = $false
@@ -341,7 +341,7 @@ $step9Found = $false
 foreach ($sp in $sitePackages) {
     $pth = Join-Path $sp "litellm_init.pth"
     if (Test-Path $pth) {
-        Write-Host "  [!!!] FOUND litellm_init.pth — SYSTEM IS COMPROMISED: $pth" -ForegroundColor Red -BackgroundColor Black
+        Write-Host "  [!!!] FOUND litellm_init.pth - SYSTEM IS COMPROMISED: $pth" -ForegroundColor Red -BackgroundColor Black
         $script:found = $true
         $step9Found = $true
     }
@@ -349,13 +349,13 @@ foreach ($sp in $sitePackages) {
 # Also scan broader roots for anything that landed outside known paths
 foreach ($artifactPath in $broadArtifacts) {
     if ((Split-Path $artifactPath -Leaf) -ne "litellm_init.pth") { continue }
-    Write-Host "  [!!!] FOUND litellm_init.pth — SYSTEM IS COMPROMISED: $artifactPath" -ForegroundColor Red -BackgroundColor Black
+    Write-Host "  [!!!] FOUND litellm_init.pth - SYSTEM IS COMPROMISED: $artifactPath" -ForegroundColor Red -BackgroundColor Black
     $script:found = $true
     $step9Found = $true
 }
 if (-not $step9Found) { Write-Host "  [OK] litellm_init.pth not found" -ForegroundColor Green }
 
-# ─── 10. Non-standard .pth files in known site-packages only ─────────────────
+# --- 10. Non-standard .pth files in known site-packages only -----------------
 Write-Host ""
 Write-Host "[10] Listing non-standard .pth files in known site-packages..." -ForegroundColor Yellow
 $knownPthPattern = '^(easy-install|distutils|distutils-precedence|setuptools|wheel|pip|pkg_resources|_virtualenv|_uv_ephemeral_overlay|aeosa)$'
@@ -373,7 +373,7 @@ foreach ($sp in $sitePackages) {
 }
 if (-not $step10Found) { Write-Host "  [OK] no unexpected .pth files" -ForegroundColor Green }
 
-# ─── Summary ─────────────────────────────────────────────────────────────────
+# --- Summary -----------------------------------------------------------------
 Write-Host ""
 Write-Host "=========================================" -ForegroundColor Cyan
 if ($script:found) {
@@ -390,7 +390,7 @@ if ($script:found) {
     Write-Host "     - Any secrets in .env files or shell history"
     Write-Host "  4. Review all connected services for unauthorized access"
 } elseif ($script:info) {
-    Write-Host "  [i]  litellm found — NOT a known malicious version." -ForegroundColor DarkYellow
+    Write-Host "  [i]  litellm found - NOT a known malicious version." -ForegroundColor DarkYellow
     Write-Host "       Confirm version is not 1.82.7 or 1.82.8." -ForegroundColor DarkYellow
     Write-Host "       Note: PyPI has suspended the package; consider alternatives." -ForegroundColor DarkYellow
 } else {
