@@ -59,7 +59,8 @@ function Flag-PipResult([string[]]$result, [string]$source) {
     }
 }
 
-$scanRoots = if ($env:LITELLM_SCAN_ROOT) { @($env:LITELLM_SCAN_ROOT) } else { @($env:USERPROFILE) }
+[string]$primaryScanRoot = if ($env:LITELLM_SCAN_ROOT) { $env:LITELLM_SCAN_ROOT } else { $env:USERPROFILE }
+[string[]]$scanRoots = @($primaryScanRoot)
 $tempExcludePatterns = if ($env:LITELLM_SCAN_ROOT) { @() } else { @('\\AppData\\Local\\Temp\\') }
 
 # Collect known site-packages directories from Python interpreters
@@ -202,7 +203,7 @@ $patRange = 'litellm[^\s=]*\s*(>=|~=)\s*["'']?1\.82\.[0-8]'
 $excludeDirs5 = @('\\\.git\\', '\\node_modules\\', '\\\.cache\\') + $tempExcludePatterns
 $depNames = @("pyproject.toml", "setup.py", "setup.cfg", "Pipfile", "poetry.lock", "uv.lock", "pdm.lock")
 
-$scanRoot5 = $scanRoots[0]
+$scanRoot5 = $primaryScanRoot
 $depCandidates = if ($env:LITELLM_SCAN_ROOT) {
     Get-ChildItem -Path $scanRoot5 -Recurse -ErrorAction SilentlyContinue | Where-Object { -not $_.PSIsContainer }
 } else {
@@ -277,7 +278,7 @@ Write-Host ""
 Write-Host "[6] Scanning project virtual environments..." -ForegroundColor Yellow
 $step6Found = $false
 $excludeDirs6 = @('\\\.git\\', '\\node_modules\\', '\\\.cache\\', '\\AppData\\Local\\Temp\\')
-$scanRoot6 = $scanRoots[0]
+$scanRoot6 = $primaryScanRoot
 # Collect into array first to avoid ForEach-Object pipeline scope issue
 $venvDirs = Get-ChildItem -Path $scanRoot6 -Recurse -Directory -Depth 6 -ErrorAction SilentlyContinue |
     Where-Object {
