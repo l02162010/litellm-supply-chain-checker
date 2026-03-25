@@ -14,12 +14,15 @@ function Invoke-Checker([string]$scriptPath, [string]$scanRoot, [string]$userPro
     $oldCaptureOutput = $env:LITELLM_CAPTURE_OUTPUT
     $oldScanRoot = $env:LITELLM_SCAN_ROOT
     $oldUserProfile = $env:USERPROFILE
+    $oldErrorActionPreference = $ErrorActionPreference
     try {
+        $ErrorActionPreference = 'SilentlyContinue'
         $env:LITELLM_CAPTURE_OUTPUT = '1'
         $env:LITELLM_SCAN_ROOT = $scanRoot
         $env:USERPROFILE = $userProfile
         return & $scriptPath 2>$null | Out-String
     } finally {
+        $ErrorActionPreference = $oldErrorActionPreference
         $env:LITELLM_CAPTURE_OUTPUT = $oldCaptureOutput
         $env:LITELLM_SCAN_ROOT = $oldScanRoot
         $env:USERPROFILE = $oldUserProfile
