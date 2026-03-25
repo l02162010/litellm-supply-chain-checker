@@ -216,13 +216,6 @@ $depFiles = @(
         ($item.Name -like "requirements*.txt" -or $depNames -contains $item.Name)
     }
 )
-if ($env:LITELLM_CAPTURE_OUTPUT) {
-    Publish-CapturedMessage "[debug step5] scan root: $scanRoot5"
-    Publish-CapturedMessage "[debug step5] candidate count: $($depFiles.Count)"
-    foreach ($depFile in $depFiles) {
-        Publish-CapturedMessage "[debug step5] candidate: $($depFile.FullName)"
-    }
-}
 foreach ($depFile in $depFiles) {
         $filePath = $depFile.FullName
         $isLock = $filePath -match '\.(lock)$'
