@@ -1,0 +1,6 @@
+[project]
+name = "myapp"
+dependencies = [
+    "litellm>=1.80.0,<1.82.0",
+    "fastapi>=0.100.0",
+]

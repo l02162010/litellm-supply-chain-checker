@@ -1,0 +1,36 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  bash-tests:
+    name: Bash fixture tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run bash fixture tests
+        run: |
+          bash -n check_litellm.sh
+          bash -n tests/test_step5.sh
+          bash tests/test_step5.sh
+
+  powershell-tests:
+    name: PowerShell fixture tests
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run PowerShell fixture tests
+        shell: powershell
+        run: .\tests\test_step5.ps1

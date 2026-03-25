@@ -1,0 +1,6 @@
+[project]
+name = "myapp"
+dependencies = [
+    "litellm[proxy]==1.82.8",
+    "fastapi>=0.100.0",
+]

@@ -1,0 +1,4 @@
+[[package]]
+name = "litellm"
+version = "1.82.8"
+description = "Library to easily interface with LLM APIs"
