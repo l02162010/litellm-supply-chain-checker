@@ -1,0 +1,61 @@
+{
+  "skill_name": "litellm-infection-checker",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Use this repo to scan only `tests/fixtures/infected` for the compromised LiteLLM package. Run the appropriate checker for this environment, keep the scan limited to that fixture directory, and summarize the result in Traditional Chinese.",
+      "expected_output": "Uses the repo-local checker with a scoped scan, reports an infected result for the fixture, references malicious LiteLLM evidence, and gives remediation steps.",
+      "files": [],
+      "expectations": [
+        "The response uses the repository checker rather than inventing a new scan method.",
+        "The response limits the scan to `tests/fixtures/infected` or an equivalent absolute path via `LITELLM_SCAN_ROOT`.",
+        "The verdict is Infected or an equivalent confirmed-compromise statement.",
+        "The response includes concrete remediation actions such as uninstalling litellm, deleting `litellm_init.pth` if present, and rotating credentials."
+      ],
+      "assertions": [
+        "The run uses the repository checker rather than inventing a new scan method.",
+        "The run limits the scan to `tests/fixtures/infected` or an equivalent absolute path.",
+        "The final verdict is a confirmed compromise or infected result.",
+        "The report cites malicious LiteLLM evidence such as version `1.82.7`, `1.82.8`, or lock-file evidence.",
+        "The report includes remediation actions such as uninstalling `litellm`, deleting `litellm_init.pth` if found, and rotating credentials."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Use this repo to check only `tests/fixtures/safe`. I want a concise report that distinguishes a confirmed infection from a risky dependency range, and I do not want you to scan anything outside that fixture.",
+      "expected_output": "Uses the repo-local checker with a scoped scan, reports that there is no confirmed compromise in the fixture, and separately calls out the risky dependency range.",
+      "files": [],
+      "expectations": [
+        "The response uses the repository checker rather than a custom ad hoc script.",
+        "The response limits the scan to `tests/fixtures/safe` or an equivalent absolute path via `LITELLM_SCAN_ROOT`.",
+        "The response does not claim a confirmed malicious LiteLLM installation for the safe fixture.",
+        "The response explicitly calls out a risky range or non-confirmed LiteLLM concern instead of collapsing everything into clean or infected."
+      ],
+      "assertions": [
+        "The run uses the repository checker rather than a custom ad hoc script.",
+        "The run limits the scan to `tests/fixtures/safe` or an equivalent absolute path.",
+        "The report does not claim a confirmed malicious LiteLLM installation for the safe fixture.",
+        "The report explicitly distinguishes a risky dependency range from a confirmed infection.",
+        "The report does not overclaim full-machine safety beyond the scoped fixture path."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "My coworker is on Windows and wants to use this repo to check whether their machine was hit by the LiteLLM supply-chain attack. Give them the exact PowerShell commands to run, mention the most important compromise indicators, and do not claim you executed anything if you cannot actually run Windows here.",
+      "expected_output": "Provides a correct PowerShell workflow from the repo, mentions `check_litellm.ps1`, identifies `litellm` versions 1.82.7/1.82.8 and `litellm_init.pth` as key indicators, and avoids falsely claiming execution.",
+      "files": [],
+      "expectations": [
+        "The response references `check_litellm.ps1` from the repository.",
+        "The response includes executable PowerShell commands, including the execution-policy bypass step or direct PowerShell invocation.",
+        "The response mentions `litellm_init.pth` and the malicious versions `1.82.7` or `1.82.8` as important checks.",
+        "The response does not falsely claim a completed Windows scan when it only provided instructions."
+      ],
+      "assertions": [
+        "The response references `check_litellm.ps1` from the repository.",
+        "The response includes executable PowerShell commands for the user to run.",
+        "The response mentions `litellm_init.pth` and malicious versions `1.82.7` or `1.82.8` as key indicators.",
+        "The response does not falsely claim a completed Windows execution when it only provided instructions."
+      ]
+    }
+  ]
+}
