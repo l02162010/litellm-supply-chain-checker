@@ -66,12 +66,8 @@ Write-Host "========================================"
 # ── Infected fixtures ──────────────────────────────────────────────────────────
 Write-Host ""
 Write-Host "[ infected fixtures ]"
-$oldUserProfile = $env:USERPROFILE
-$env:USERPROFILE = $fixtures
-$env:LITELLM_SCAN_ROOT = Join-Path $fixtures "infected"
-$out = Invoke-Checker $script $env:LITELLM_SCAN_ROOT $env:USERPROFILE
-$env:LITELLM_SCAN_ROOT = $null
-$env:USERPROFILE = $oldUserProfile
+$infectedScanRoot = Join-Path $fixtures "infected"
+$out = Invoke-Checker $script $infectedScanRoot $fixtures
 $failBefore = $fail
 
 Assert-Contains `
@@ -94,12 +90,8 @@ if ($fail -gt $failBefore) { Show-DebugOutput "infected fixtures" $out }
 # ── Safe fixtures ──────────────────────────────────────────────────────────────
 Write-Host ""
 Write-Host "[ safe fixtures ]"
-$oldUserProfile = $env:USERPROFILE
-$env:USERPROFILE = $fixtures
-$env:LITELLM_SCAN_ROOT = Join-Path $fixtures "safe"
-$out = Invoke-Checker $script $env:LITELLM_SCAN_ROOT $env:USERPROFILE
-$env:LITELLM_SCAN_ROOT = $null
-$env:USERPROFILE = $oldUserProfile
+$safeScanRoot = Join-Path $fixtures "safe"
+$out = Invoke-Checker $script $safeScanRoot $fixtures
 $failBefore = $fail
 
 Assert-NotContains `
@@ -154,12 +146,7 @@ $tmpHome = Join-Path ([System.IO.Path]::GetTempPath()) ([guid]::NewGuid().ToStri
 New-Item -ItemType Directory -Path (Join-Path $tmpScan "lib/python3.11/site-packages/litellm-1.82.8.egg-info") -Force | Out-Null
 New-Item -ItemType Directory -Path $tmpHome -Force | Out-Null
 New-Item -ItemType File -Path (Join-Path $tmpHome "litellm_init.pth") | Out-Null
-$oldUserProfile = $env:USERPROFILE
-$env:LITELLM_SCAN_ROOT = $tmpScan
-$env:USERPROFILE = $tmpHome
-$out = Invoke-Checker $script $env:LITELLM_SCAN_ROOT $env:USERPROFILE
-$env:LITELLM_SCAN_ROOT = $null
-$env:USERPROFILE = $oldUserProfile
+$out = Invoke-Checker $script $tmpScan $tmpHome
 Remove-Item -Recurse -Force $tmpScan, $tmpHome
 
 Assert-Contains `
