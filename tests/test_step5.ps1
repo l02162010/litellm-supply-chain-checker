@@ -10,6 +10,11 @@ $fixtures = Join-Path $PSScriptRoot "fixtures"
 $pass = 0
 $fail = 0
 
+function Invoke-Checker([string]$scriptPath) {
+    $escapedScript = $scriptPath.Replace("'", "''")
+    return & powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "& { & '$escapedScript' *>&1 | Out-String }"
+}
+
 function Assert-Contains([string]$label, [string]$output, [string]$expected) {
     if ($output -match [regex]::Escape($expected) -or $output -match $expected) {
         Write-Host "  PASS  $label" -ForegroundColor Green
@@ -42,7 +47,7 @@ Write-Host "[ infected fixtures ]"
 $oldUserProfile = $env:USERPROFILE
 $env:USERPROFILE = $fixtures
 $env:LITELLM_SCAN_ROOT = Join-Path $fixtures "infected"
-$out = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $script 2>$null | Out-String
+$out = Invoke-Checker $script
 $env:LITELLM_SCAN_ROOT = $null
 $env:USERPROFILE = $oldUserProfile
 
@@ -68,7 +73,7 @@ Write-Host "[ safe fixtures ]"
 $oldUserProfile = $env:USERPROFILE
 $env:USERPROFILE = $fixtures
 $env:LITELLM_SCAN_ROOT = Join-Path $fixtures "safe"
-$out = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $script 2>$null | Out-String
+$out = Invoke-Checker $script
 $env:LITELLM_SCAN_ROOT = $null
 $env:USERPROFILE = $oldUserProfile
 
@@ -126,7 +131,7 @@ New-Item -ItemType File -Path (Join-Path $tmpHome "litellm_init.pth") | Out-Null
 $oldUserProfile = $env:USERPROFILE
 $env:LITELLM_SCAN_ROOT = $tmpScan
 $env:USERPROFILE = $tmpHome
-$out = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $script 2>$null | Out-String
+$out = Invoke-Checker $script
 $env:LITELLM_SCAN_ROOT = $null
 $env:USERPROFILE = $oldUserProfile
 Remove-Item -Recurse -Force $tmpScan, $tmpHome

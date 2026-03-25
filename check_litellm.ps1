@@ -54,6 +54,7 @@ function Flag-PipResult([string[]]$result, [string]$source) {
 }
 
 $scanRoots = if ($env:LITELLM_SCAN_ROOT) { @($env:LITELLM_SCAN_ROOT) } else { @($env:USERPROFILE) }
+$tempExcludePatterns = if ($env:LITELLM_SCAN_ROOT) { @() } else { @('\\AppData\\Local\\Temp\\') }
 
 # Collect known site-packages directories from Python interpreters
 function Get-SitePackages {
@@ -192,7 +193,7 @@ Write-Host "[5] Searching project dependency files and lock files..." -Foregroun
 $step5Found = $false
 $patExact = 'litellm[^\s=]*\s*==\s*["'']?(1\.82\.7|1\.82\.8)'
 $patRange = 'litellm[^\s=]*\s*(>=|~=)\s*["'']?1\.82\.[0-8]'
-$excludeDirs5 = @('\\\.git\\', '\\node_modules\\', '\\\.cache\\', '\\AppData\\Local\\Temp\\')
+$excludeDirs5 = @('\\\.git\\', '\\node_modules\\', '\\\.cache\\') + $tempExcludePatterns
 $depNames = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
 foreach ($name in @("pyproject.toml", "setup.py", "setup.cfg", "Pipfile", "poetry.lock", "uv.lock", "pdm.lock")) {
     [void]$depNames.Add($name)
@@ -292,7 +293,7 @@ if (Get-Command uv -ErrorAction SilentlyContinue) {
 Write-Host ""
 Write-Host "[8] Searching for litellm dist-info / egg-info..." -ForegroundColor Yellow
 $step8Found = $false
-$excludeDirsBroad = @('\\\.git\\', '\\node_modules\\', '\\\.cache\\', '\\AppData\\Local\\Temp\\')
+$excludeDirsBroad = @('\\\.git\\', '\\node_modules\\', '\\\.cache\\') + $tempExcludePatterns
 $broadArtifacts = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
 foreach ($root in $scanRoots) {
     if (-not (Test-Path $root)) { continue }
