@@ -200,17 +200,19 @@ $step5Found = $false
 $patExact = 'litellm[^\s=]*\s*==\s*["'']?(1\.82\.7|1\.82\.8)'
 $patRange = 'litellm[^\s=]*\s*(>=|~=)\s*["'']?1\.82\.[0-8]'
 $excludeDirs5 = @('\\\.git\\', '\\node_modules\\', '\\\.cache\\') + $tempExcludePatterns
-$depNames = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
-foreach ($name in @("pyproject.toml", "setup.py", "setup.cfg", "Pipfile", "poetry.lock", "uv.lock", "pdm.lock")) {
-    [void]$depNames.Add($name)
-}
+$depNames = @("pyproject.toml", "setup.py", "setup.cfg", "Pipfile", "poetry.lock", "uv.lock", "pdm.lock")
 
 $scanRoot5 = $scanRoots[0]
-Get-ChildItem -Path $scanRoot5 -Recurse -Depth 8 -File -ErrorAction SilentlyContinue |
+$depCandidates = if ($env:LITELLM_SCAN_ROOT) {
+    Get-ChildItem -Path $scanRoot5 -Recurse -ErrorAction SilentlyContinue | Where-Object { -not $_.PSIsContainer }
+} else {
+    Get-ChildItem -Path $scanRoot5 -Recurse -Depth 8 -File -ErrorAction SilentlyContinue
+}
+$depCandidates |
     Where-Object {
         $item = $_
         (-not (Test-IsExcludedPath $item.FullName $excludeDirs5)) -and
-        ($item.Name -like "requirements*.txt" -or $depNames.Contains($item.Name))
+        ($item.Name -like "requirements*.txt" -or $depNames -contains $item.Name)
     } |
     ForEach-Object {
         $filePath = $_.FullName
