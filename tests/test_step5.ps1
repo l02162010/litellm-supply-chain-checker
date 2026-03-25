@@ -10,9 +10,11 @@ $fixtures = Join-Path $PSScriptRoot "fixtures"
 $pass = 0
 $fail = 0
 
-function Invoke-Checker([string]$scriptPath) {
+function Invoke-Checker([string]$scriptPath, [string]$scanRoot, [string]$userProfile) {
     $escapedScript = $scriptPath.Replace("'", "''")
-    return & powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "& { `$env:LITELLM_CAPTURE_OUTPUT = '1'; & '$escapedScript' *>&1 | Out-String }"
+    $escapedScanRoot = $scanRoot.Replace("'", "''")
+    $escapedUserProfile = $userProfile.Replace("'", "''")
+    return & powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "& { `$env:LITELLM_CAPTURE_OUTPUT = '1'; `$env:LITELLM_SCAN_ROOT = '$escapedScanRoot'; `$env:USERPROFILE = '$escapedUserProfile'; & '$escapedScript' *>&1 | Out-String }"
 }
 
 function Assert-Contains([string]$label, [string]$output, [string]$expected) {
@@ -55,7 +57,7 @@ Write-Host "[ infected fixtures ]"
 $oldUserProfile = $env:USERPROFILE
 $env:USERPROFILE = $fixtures
 $env:LITELLM_SCAN_ROOT = Join-Path $fixtures "infected"
-$out = Invoke-Checker $script
+$out = Invoke-Checker $script $env:LITELLM_SCAN_ROOT $env:USERPROFILE
 $env:LITELLM_SCAN_ROOT = $null
 $env:USERPROFILE = $oldUserProfile
 $failBefore = $fail
@@ -83,7 +85,7 @@ Write-Host "[ safe fixtures ]"
 $oldUserProfile = $env:USERPROFILE
 $env:USERPROFILE = $fixtures
 $env:LITELLM_SCAN_ROOT = Join-Path $fixtures "safe"
-$out = Invoke-Checker $script
+$out = Invoke-Checker $script $env:LITELLM_SCAN_ROOT $env:USERPROFILE
 $env:LITELLM_SCAN_ROOT = $null
 $env:USERPROFILE = $oldUserProfile
 $failBefore = $fail
@@ -143,7 +145,7 @@ New-Item -ItemType File -Path (Join-Path $tmpHome "litellm_init.pth") | Out-Null
 $oldUserProfile = $env:USERPROFILE
 $env:LITELLM_SCAN_ROOT = $tmpScan
 $env:USERPROFILE = $tmpHome
-$out = Invoke-Checker $script
+$out = Invoke-Checker $script $env:LITELLM_SCAN_ROOT $env:USERPROFILE
 $env:LITELLM_SCAN_ROOT = $null
 $env:USERPROFILE = $oldUserProfile
 Remove-Item -Recurse -Force $tmpScan, $tmpHome
