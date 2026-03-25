@@ -63,25 +63,6 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 .\check_litellm.ps1
 ```
 
-**Collect failed GitHub Actions logs into a folder:**
-```bash
-python3 collect_action_logs.py --limit 5 --output-dir action-logs
-```
-
-**Collect one specific run:**
-```bash
-python3 collect_action_logs.py --run-id 23534721081 --output-dir action-logs
-```
-
-This helper uses the `gh` CLI to find failed Actions runs, then writes:
-- `action-logs/index.md`
-- one subfolder per run
-- `summary.md`
-- `failed.log`
-- one log file per failed job
-
-If you are outside the repo, pass `--repo OWNER/REPO`.
-
 ---
 
 ## If infected
